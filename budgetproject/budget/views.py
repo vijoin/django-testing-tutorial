@@ -5,6 +5,7 @@ from django.views.generic import CreateView
 from django.utils.text import slugify
 from .forms import ExpenseForm
 import json
+from json.decoder import JSONDecodeError
 
 def project_list(request):
     project_list = Project.objects.all()
@@ -35,11 +36,15 @@ def project_detail(request, project_slug):
             )
 
     elif request.method == 'DELETE':
-        id = json.loads(request.body)['id']
-        expense = Expense.objects.get(id=id)
-        expense.delete()
+        try:
+            expense_id = json.loads(request.body)['id']
+            expense = Expense.objects.get(id=expense_id)
+            expense.delete()
 
-        return HttpResponse(status=204)
+            return HttpResponse(status=204)
+
+        except JSONDecodeError:
+            return HttpResponse(status=404)
 
     return redirect(project)
 
